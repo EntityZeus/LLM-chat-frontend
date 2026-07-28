@@ -64,96 +64,6 @@ const ChatContentComponent = () => {
     }
   };
 
-  const renderInlineMarkdown = (content: string) => {
-    const inlinePattern = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)/g;
-    const parts: Array<JSX.Element | string> = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = inlinePattern.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(content.slice(lastIndex, match.index));
-      }
-
-      if (match[1]) {
-        parts.push(<code key={`${match.index}-code`}>{match[1].slice(1, -1)}</code>);
-      } else if (match[2]) {
-        parts.push(<strong key={`${match.index}-bold`}>{match[2].slice(2, -2)}</strong>);
-      } else if (match[3]) {
-        parts.push(<em key={`${match.index}-italic`}>{match[3].slice(1, -1)}</em>);
-      }
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    if (lastIndex < content.length) {
-      parts.push(content.slice(lastIndex));
-    }
-
-    return <>{parts}</>;
-  };
-
-  const renderMarkdownBlocks = (content: string) => {
-    const lines = content.split('\n');
-    const blocks: Array<JSX.Element> = [];
-    let paragraphLines: string[] = [];
-
-    const flushParagraph = () => {
-      if (!paragraphLines.length) {
-        return;
-      }
-
-      blocks.push(
-        <p key={`paragraph-${blocks.length}`}>
-          {renderInlineMarkdown(paragraphLines.join(' '))}
-        </p>,
-      );
-      paragraphLines = [];
-    };
-
-    lines.forEach((line, index) => {
-      const trimmed = line.trim();
-
-      if (!trimmed) {
-        flushParagraph();
-        return;
-      }
-
-      if (/^[-*]\s+/.test(trimmed)) {
-        flushParagraph();
-        blocks.push(
-          <ul key={`list-${index}`}>
-            <li>{renderInlineMarkdown(trimmed.replace(/^[-*]\s+/, ''))}</li>
-          </ul>,
-        );
-        return;
-      }
-
-      if (/^\d+\.\s+/.test(trimmed)) {
-        flushParagraph();
-        blocks.push(
-          <ol key={`list-${index}`}>
-            <li>{renderInlineMarkdown(trimmed.replace(/^\d+\.\s+/, ''))}</li>
-          </ol>,
-        );
-        return;
-      }
-
-      paragraphLines.push(trimmed);
-    });
-
-    flushParagraph();
-    return <div className="markdown-body">{blocks}</div>;
-  };
-
-  const renderMessageContent = (content: string, role: Message['role']) => {
-    if (role === 'assistant') {
-      return renderMarkdownBlocks(content);
-    }
-
-    return <span>{content}</span>;
-  };
-
   return (
     <div className="chat-shell">
       <div className="chat-body">
@@ -170,7 +80,7 @@ const ChatContentComponent = () => {
             {messages.map((item) => (
               <div key={item.id} className={`message-row ${item.role}`}>
                 <div className={`message-bubble ${item.role}`}>
-                  {renderMessageContent(item.content, item.role)}
+                  {item.content}
                 </div>
               </div>
             ))}
